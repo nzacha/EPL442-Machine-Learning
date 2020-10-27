@@ -120,24 +120,7 @@ class BackPropagationNetwork{
         pair<double, double> trainNetwork(float learningRate, float momentum, int numInputs, int** inputs, int** targetOutputs){
             float errors = 0;
             int successes = 0;
-            stringstream ctext;
             for(int inputIndex=0; inputIndex < numInputs; inputIndex++){
-                if(inputIndex !=0 ) {
-                    Console::backspace(ctext.str().length());
-                    ctext.str("");
-                }
-
-                ctext << " => [";
-                int progress = 0, total_progress = 10;
-                for (; progress < (int) ((inputIndex * 1.0 / numInputs)* total_progress); progress++){
-                    ctext << "#";
-                }
-                for(; progress < total_progress; progress++){
-                    ctext << " ";
-                }
-                ctext << "] " << flush;
-                cout << ctext.str() << flush;
-
                 if(VISUALIZE_ALL || VISUALIZE){ 
                     cout << "\t> Training: ";
                     for(int i=0; i<numInputNeurons; i++){
@@ -148,6 +131,8 @@ class BackPropagationNetwork{
                         cout << targetOutputs[inputIndex][i] << " ";
                     }
                     cout << endl;
+                }else {
+                    Console::update_progressbar(inputIndex+1, numInputs);
                 }
 
                 //forward pass            
@@ -218,6 +203,8 @@ class BackPropagationNetwork{
             double error;
             for(int input=0; input<numData; input++){
                 if(VISUALIZE) cout << "\t> Evaluating: ";
+                else Console::update_progressbar(input+1, numData);
+
                 for(int i=0; i<numInputNeurons-1; i++) 
                     if(VISUALIZE) cout << inputs[input][i] << ", ";
                 if(VISUALIZE) cout << inputs[input][numInputNeurons-1] << " => ";

@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 #include "bpNetwork.cpp"
-#include "../Helper/routines.cpp"
+#include "../Helper/routine.cpp"
 #include "../Helper/console.h"
 
 class BackPropagationRoutine: public Routine{
@@ -10,10 +10,24 @@ class BackPropagationRoutine: public Routine{
         int* hiddenLayerSizes;
         int maxIterations, numInputNeurons, numOutputNeurons, numHiddenLayers;
         float learningRate, momentum;
+        string required_params[12] = {"maxIterations", "numInputNeurons", "numOutputNeurons", "numHiddenLayers", "learningRate", "momentum", "train_test_ratio", "progressbar_length", "trainFile", "testFile", "errors_out", "accuracy_out"};
 
         BackPropagationNetwork* bp;
         
+        void handleMissingParameter(string parameter){
+            cout << "Parameter: \"" << parameter << "\" was not defined, program exiting..." << endl;
+            exit(0);
+        }
+
+        void checkParameterExists(string parameter){
+            if(params.find(parameter) == params.end()) handleMissingParameter(parameter);
+        }
+
         BackPropagationRoutine(string params_in, char delimeter):Routine(params_in, delimeter){
+            for(string s: required_params){
+                checkParameterExists(s);
+            }
+
             //Set parameters
             this->maxIterations = stoi(params["maxIterations"]);
             this->numInputNeurons = stoi(params["numInputNeurons"]);
@@ -26,6 +40,7 @@ class BackPropagationRoutine: public Routine{
             hiddenLayerSizes = new int[numHiddenLayers];
             for(int i=0; i<numHiddenLayers; i++){
                 string layerName = "layer-"+ to_string(i);
+                checkParameterExists(layerName);
                 hiddenLayerSizes[i] = stoi(params[layerName]);
                 if(hiddenLayerSizes[i]==0){
                     cout << "Layer size cannot be 0." << endl;
@@ -68,7 +83,8 @@ class BackPropagationRoutine: public Routine{
             bp->setDataset(test_data, &test_inputs, &test_outputs, numInputNeurons, numOutputNeurons, numTestSamples);
         }
 
-        void readUniformDataSet(vector<string> labels, float train_set_ratio){
+        void readUniformDataSet(vector<string> labels){
+            checkParameterExists("datasetFile");
             unordered_map<string, vector<vector<string>>> data = readLabeledVarSizeData(params["datasetFile"], ',');
             vector<pair<string, vector<string>>> trainset, testset;
             
@@ -76,7 +92,7 @@ class BackPropagationRoutine: public Routine{
             //split data into train and test data for every input type
             for(string s : labels){
                 int datasize = data[s].size();
-                int trainsize = datasize * train_set_ratio;
+                int trainsize = datasize * stof(params["train_test_ratio"]);
                 int testsize = datasize - trainsize;
                 if(DEBUG){
                     cout << "label: " << s << endl;
@@ -138,24 +154,39 @@ class BackPropagationRoutine: public Routine{
             cout << "-> Training network for " << maxIterations << " cycles ..." << endl;
             cout << "-> Learning rate: " << learningRate << ", Momentum: " << momentum << endl;
             for(int cycle=0; cycle<maxIterations; cycle++){
-                if(cycle!=0) Console::clear_line();
-                cout << "\t> Simulating cycle " << cycle << "/" << maxIterations << flush;
+                cout << "\t> Simulating cycle " << cycle << "/" << maxIterations << " " << endl;
                 
+                int progressbar_length = stoi(params["progressbar_length"]);
                 if (VISUALIZE) cout << "> Training network:" << endl;
+                else {
+                    cout << "\t> Training data... " << flush;
+                    Console::create_progressbar(progressbar_length);
+                }
+                    
                 temp = bp->trainNetwork(learningRate, momentum, numTrainSamples, train_inputs, train_outputs);
                 successes[cycle].first = temp.first;
                 errors[cycle].first = temp.second;
                 if(VISUALIZE) cout << "> Training done... " << endl << endl;
 
                 if(VISUALIZE) cout << "> Testing network: " << endl;
+                else{
+                    Console::clear_progressbar();
+                    Console::clear_line();
+                    cout << "\t> Testing data... " << flush;
+                    Console::create_progressbar(progressbar_length);
+                }
                 temp = bp->evaluateNetwork(numTestSamples, test_inputs, test_outputs);
                 successes[cycle].second = temp.first;
                 errors[cycle].second = temp.second;
                 if(VISUALIZE) cout << "> Testing done... " << endl << endl;
-                
+                else {
+                    Console::clear_progressbar();
+                    Console::clear_line();
+                    Console::cursor_up();
+                    Console::clear_line();  
+                }
                 if(cycle != maxIterations-1 && cycle % VISUALIZATION_ITERATION_INTERVAL == 0) Console::ring_bell();
             }
-            Console::clear_line();
 
             cout << endl << "Routine DONE..." << endl << endl;
             system("./play_clip.sh");
@@ -191,7 +222,7 @@ int main(int argc, char** argv){
             for(char c='A'; c<='Z'; c++)
                 labels.push_back(string(1,c)); 
         }
-        routine->readUniformDataSet(labels, 0.80f);
+        //routine->readUniformDataSet(labels);
     }
     routine->readDataSetsFromFiles();
     routine->run_routine();

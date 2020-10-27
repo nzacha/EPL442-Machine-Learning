@@ -1,5 +1,9 @@
+#include <stdio.h>
+#include <unistd.h>
+
 #include "bpNetwork.cpp"
 #include "../Helper/routines.cpp"
+#include "../Helper/console.h"
 
 class BackPropagationRoutine: public Routine{
     public:
@@ -48,6 +52,7 @@ class BackPropagationRoutine: public Routine{
         int **test_inputs, **test_outputs;
         int numTestSamples;
         void readDataSetsFromFiles(){
+            cout << "-> Reading train set and test set from files (" << params["trainFile"] << "), (" << params["testFile"] << ") ..." << endl;
             //Mapping training data from file
             vector<vector<string>> train_data = readFixedSizeData(params["trainFile"], numInputNeurons + numOutputNeurons, ' ');
             numTrainSamples = train_data.size();
@@ -67,6 +72,7 @@ class BackPropagationRoutine: public Routine{
             unordered_map<string, vector<vector<string>>> data = readLabeledVarSizeData(params["datasetFile"], ',');
             vector<pair<string, vector<string>>> trainset, testset;
             
+            cout << "-> Creating train set and test set files from uniform, labeled dataset ..." << endl;
             //split data into train and test data for every input type
             for(string s : labels){
                 int datasize = data[s].size();
@@ -129,10 +135,12 @@ class BackPropagationRoutine: public Routine{
             successes = new pair<double, double>[maxIterations];
             errors = new pair<double, double>[maxIterations];
 
-            cout << "Training network for " << maxIterations << " cycles ..." << endl;
-            cout << "Learning rate: " << learningRate << ", Momentum: " << momentum << endl << endl;
+            cout << "-> Training network for " << maxIterations << " cycles ..." << endl;
+            cout << "-> Learning rate: " << learningRate << ", Momentum: " << momentum << endl;
             for(int cycle=0; cycle<maxIterations; cycle++){
-                cout << "Simulating cycle " << cycle << "..." << endl;
+                if(cycle!=0) Console::clear_line();
+                cout << "\t> Simulating cycle " << cycle << "/" << maxIterations << flush;
+                
                 if (VISUALIZE) cout << "> Training network:" << endl;
                 temp = bp->trainNetwork(learningRate, momentum, numTrainSamples, train_inputs, train_outputs);
                 successes[cycle].first = temp.first;
@@ -144,8 +152,13 @@ class BackPropagationRoutine: public Routine{
                 successes[cycle].second = temp.first;
                 errors[cycle].second = temp.second;
                 if(VISUALIZE) cout << "> Testing done... " << endl << endl;
+                
+                if(cycle != maxIterations-1 && cycle % VISUALIZATION_ITERATION_INTERVAL == 0) Console::ring_bell();
             }
-            cout << "Routine DONE..." << endl << endl;
+            Console::clear_line();
+
+            cout << endl << "Routine DONE..." << endl << endl;
+            system("./play_clip.sh");
         }
 
         void writeResults(){
@@ -178,7 +191,7 @@ int main(int argc, char** argv){
             for(char c='A'; c<='Z'; c++)
                 labels.push_back(string(1,c)); 
         }
-        routine->readUniformDataSet(labels, 0.75f);
+        routine->readUniformDataSet(labels, 0.80f);
     }
     routine->readDataSetsFromFiles();
     routine->run_routine();

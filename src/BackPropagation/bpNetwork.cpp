@@ -6,12 +6,13 @@
 #include <vector>
 
 #include "../Helper/network.h"
+#include "../Helper/console.h"
 
 using namespace std;
 
 #define VISUALIZE false
 #define VISUALIZE_ALL false
-#define VISUALIZATION_ITERATION_INTERVAL 500
+#define VISUALIZATION_ITERATION_INTERVAL 20 
 
 //The network representation in neuron layers
 class BackPropagationNetwork{
@@ -119,7 +120,24 @@ class BackPropagationNetwork{
         pair<double, double> trainNetwork(float learningRate, float momentum, int numInputs, int** inputs, int** targetOutputs){
             float errors = 0;
             int successes = 0;
-            for(int inputIndex=0; inputIndex<numInputs; inputIndex++){
+            stringstream ctext;
+            for(int inputIndex=0; inputIndex < numInputs; inputIndex++){
+                if(inputIndex !=0 ) {
+                    Console::backspace(ctext.str().length());
+                    ctext.str("");
+                }
+
+                ctext << " => [";
+                int progress = 0, total_progress = 10;
+                for (; progress < (int) ((inputIndex * 1.0 / numInputs)* total_progress); progress++){
+                    ctext << "#";
+                }
+                for(; progress < total_progress; progress++){
+                    ctext << " ";
+                }
+                ctext << "] " << flush;
+                cout << ctext.str() << flush;
+
                 if(VISUALIZE_ALL || VISUALIZE){ 
                     cout << "\t> Training: ";
                     for(int i=0; i<numInputNeurons; i++){
@@ -150,7 +168,7 @@ class BackPropagationNetwork{
                             max = i;
                         }
                     }else{
-                        //accumulate cycle successes
+                        //accumulate cycle succsses
                         max = (output->value >= 0.5) ? 1 : 0;
                         if(max == targetOutputs[inputIndex][i])
                             successes++;

@@ -185,7 +185,7 @@ class BackPropagationRoutine: public Routine{
             }
 
             cout << endl << "Routine DONE..." << endl << endl;
-            system("./play_clip.sh");
+            //system("./play_clip.sh");
         }
 
         void writeResults(){

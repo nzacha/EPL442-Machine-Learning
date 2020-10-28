@@ -159,7 +159,6 @@ class BackPropagationRoutine: public Routine{
                 int progressbar_length = stoi(params["progressbar_length"]);
                 if (VISUALIZE) cout << "> Training network:" << endl;
                 else {
-                    cout << "\t> Training data... " << flush;
                     Console::create_progressbar(progressbar_length);
                 }
                     
@@ -171,7 +170,6 @@ class BackPropagationRoutine: public Routine{
                 if(VISUALIZE) cout << "> Testing network: " << endl;
                 else{
                     Console::clear_line();
-                    cout << "\t> Testing data... " << flush;
                     Console::create_progressbar(progressbar_length);
                 }
                 temp = bp->evaluateNetwork(numTestSamples, test_inputs, test_outputs);

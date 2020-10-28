@@ -10,6 +10,6 @@ trainFile inputs/training.txt
 testFile inputs/testing.txt
 datasetFile inputs/letter-recognition.txt
 train_test_ratio 0.75
-progressbar_length 20
+progressbar_length 10
 errors_out results/errors.txt
 accuracy_out results/successrate.txt

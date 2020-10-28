@@ -183,7 +183,7 @@ class BackPropagationRoutine: public Routine{
                     Console::clear_progressbar();
                     Console::clear_line();
                     Console::cursor_up();
-                    Console::clear_line();  
+                    Console::clear_line();
                 }
                 if(cycle != maxIterations-1 && cycle % VISUALIZATION_ITERATION_INTERVAL == 0) Console::ring_bell();
             }

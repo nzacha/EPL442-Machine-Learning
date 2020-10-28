@@ -1,4 +1,6 @@
 #include <iostream>
+#include <sstream>
+
 #ifndef console_header
 #define console_header
 using namespace std;
@@ -74,7 +76,7 @@ namespace Console{
         
         //print label
         pb.precision(2);
-        pb << job << "/" << jobs_size << " (" << fixed << (percentage * 100) << "%)" << flush;
+        pb << job << "/" << jobs_size << " (" << fixed << (percentage * 100) << "%) " << flush;
 
         cout << pb.str() << flush;
         return pb.str().length();
@@ -96,7 +98,7 @@ namespace Console{
     static void update_progressbar(int job, int jobs_size){
         if(job > jobs_size) return;
         
-        clear_progressbar();
+        //clear_progressbar();
         showProgress(job, jobs_size);
     }
 

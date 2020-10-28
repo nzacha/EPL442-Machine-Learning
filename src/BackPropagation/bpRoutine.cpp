@@ -170,7 +170,6 @@ class BackPropagationRoutine: public Routine{
 
                 if(VISUALIZE) cout << "> Testing network: " << endl;
                 else{
-                    Console::clear_progressbar();
                     Console::clear_line();
                     cout << "\t> Testing data... " << flush;
                     Console::create_progressbar(progressbar_length);
@@ -180,7 +179,6 @@ class BackPropagationRoutine: public Routine{
                 errors[cycle].second = temp.second;
                 if(VISUALIZE) cout << "> Testing done... " << endl << endl;
                 else {
-                    Console::clear_progressbar();
                     Console::clear_line();
                     Console::cursor_up();
                     Console::clear_line();

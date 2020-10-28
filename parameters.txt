@@ -1,4 +1,4 @@
-numHiddenLayers 2
+numHiddenLayers 1
 layer-0 120
 layer-1 120
 numInputNeurons 16
@@ -9,7 +9,7 @@ maxIterations 200
 trainFile inputs/training.txt
 testFile inputs/testing.txt
 datasetFile inputs/letter-recognition.txt
-train_test_ratio 0.75
+train_test_ratio 0.7
 progressbar_length 10
 errors_out results/errors.txt
 accuracy_out results/successrate.txt

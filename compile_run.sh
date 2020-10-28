@@ -4,5 +4,5 @@ echo "executing program.."
 echo
 ./executable.out
 rm executable.out
-./scripts/mail/send_mail.sh
-./scripts/sound/play_sound.sh
+./play_sound.sh
+./send_mail.sh

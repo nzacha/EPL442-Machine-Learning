@@ -5,6 +5,8 @@
 #define console_header
 using namespace std;
 
+#define ACTIVE false
+
 namespace Console{
     static void backspace(){
         cout << "\b" << flush;
@@ -64,6 +66,8 @@ namespace Console{
 
     int progressbar_length = 0, textSize = 0;
     static int print_progressbar(int progress, float percentage, int job, int jobs_size){
+        if(!ACTIVE) return 0;
+
         stringstream pb; 
 
         //print progressbar

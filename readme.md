@@ -1,7 +1,10 @@
 To compile: 
-	- g++ -g -std=c++11 src/BackPropagation/backpropagation.cpp -o executable.out
+	
+	g++ -g -std=c++11 src/BackPropagation/backpropagation.cpp -o executable.out
+
 To run:
-	- ./executable.out
+
+	./executable.out
 	
 The project includes multiple scripts that:
 	- compile code

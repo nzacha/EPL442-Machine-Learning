@@ -7,6 +7,7 @@ To run:
 	./executable.out
 	
 The project includes multiple scripts that:
+
 	- compile code
 	- send my a personal email
 	- play a sound

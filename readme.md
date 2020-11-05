@@ -6,6 +6,20 @@ To run:
 
 	./executable.out
 	
+To see program options:
+	
+	./executable.out -h
+	
+To see the magic
+
+	./executable.out -progress
+
+For threaded - simultaneous execution:
+	
+	./execute.out -t [no. of threads]
+
+Netowrk parameters can be altered from the 'parameters.txt' file
+	
 The project includes multiple scripts that:
 
 	- compile code

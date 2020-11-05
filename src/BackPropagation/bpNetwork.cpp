@@ -131,7 +131,7 @@ class BackPropagationNetwork{
                         cout << targetOutputs[inputIndex][i] << " ";
                     }
                     cout << endl;
-                }else {
+                }else if(Console::SHOW_PROGRESS){
                     Console::clear_line();
                     cout << "\t> Training data... " << flush;
                     Console::update_progressbar(inputIndex+1, numInputs);
@@ -205,7 +205,7 @@ class BackPropagationNetwork{
             double error;
             for(int input=0; input<numData; input++){
                 if(VISUALIZE) cout << "\t> Evaluating: ";
-                else {
+                else if(Console::SHOW_PROGRESS) {
                     Console::clear_line();
                     cout << "\t> Testing data... " << flush;
                     Console::update_progressbar(input+1, numData);

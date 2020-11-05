@@ -12,6 +12,10 @@ class Routine{
             this->params = readParameters("parameters.txt", delimeter);
         }
 
+        Routine(unordered_map<string, string> params){
+            this->params = params;
+        }
+
         virtual void run_routine()=0; 
         virtual void writeResults()=0;
         

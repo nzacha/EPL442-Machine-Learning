@@ -11,7 +11,7 @@ class BackPropagationRoutine: public Routine{
         BackPropagationNetwork* bpNetwork;
 
         int* hiddenLayerSizes;
-        int maxIterations, numInputNeurons, numOutputNeurons, numHiddenLayers;
+        int numHiddenLayers;
         float learningRate, momentum;
         
         void init(){
@@ -55,83 +55,12 @@ class BackPropagationRoutine: public Routine{
         }
     
     public:
-        string required_params[12] = {"maxIterations", "numInputNeurons", "numOutputNeurons", "numHiddenLayers", "learningRate", "momentum", "train_test_ratio", "progressbar_length", "trainFile", "testFile", "errors_out", "accuracy_out"};
-
-        void handleMissingParameter(string parameter){
-            cout << "Parameter: \"" << parameter << "\" was not defined, program exiting..." << endl;
-            exit(0);
-        }
-
-        void checkParameterExists(string parameter){
-            if(params.find(parameter) == params.end()) handleMissingParameter(parameter);
-        }
-
         BackPropagationRoutine(unordered_map<string, string> params):Routine(params){
             init();
         }
 
         BackPropagationRoutine(string params_in, char delimeter):Routine(params_in, delimeter){
             init();
-        }
-
-        void readUniformDataSet(vector<string> labels){
-            checkParameterExists("datasetFile");
-            unordered_map<string, vector<vector<string>>> data = readLabeledVarSizeData(params["datasetFile"], ',');
-            vector<pair<string, vector<string>>> trainset, testset;
-            
-            cout << "-> Creating train set and test set files from uniform, labeled dataset ..." << endl;
-            //split data into train and test data for every input type
-            for(string s : labels){
-                int datasize = data[s].size();
-                int trainsize = datasize * stof(params["train_test_ratio"]);
-                int testsize = datasize - trainsize;
-                if(DEBUG){
-                    cout << "label: " << s << endl;
-                    cout << "data size is: " << datasize << endl;
-                    cout << "train size: " << trainsize << endl;
-                    cout << "test size: " << testsize << endl;
-                }
-
-                for(int i=datasize-1; i>=trainsize; i--){
-                    testset.push_back(make_pair(s, data[s].at(i)));
-                    data[s].erase(data[s].begin()+i);
-                }
-                for(int i=trainsize-1; i>=0; i--){
-                    trainset.push_back(make_pair(s, data[s].at(i)));
-                    data[s].erase(data[s].begin()+i);
-                }
-            }
-
-            //fill trainstream
-            stringstream trainstream = fillstream(labels, trainset);
-            stringstream teststream = fillstream(labels, testset);
-            
-            writeFile(params["trainFile"], trainstream.str());
-            writeFile(params["testFile"], teststream.str());
-        }
-
-        stringstream fillstream(vector<string> labels, vector<pair<string, vector<string>>> dataset){
-            stringstream stream;
-            srand(time(NULL));
-            int total_data = dataset.size();
-            for(int i=0; i<total_data; i++){
-                //get a random entry from all train set to randomize order
-                int index = (int)(rand() % dataset.size());
-                pair<string, vector<string>> entry = dataset.at(index);
-                dataset.erase(dataset.begin()+index);
-                for(int j=0; j<numInputNeurons; j++){
-                    stream << entry.second.at(j) << " ";
-                }
-                for(string s: labels){
-                    if(s == entry.first){
-                        stream << 1 << " ";
-                        continue;
-                    }
-                    stream << 0 << " ";
-                }
-                stream << endl;
-            }
-            return stream;
         }
 
         //Store info to dump into file later
@@ -144,9 +73,11 @@ class BackPropagationRoutine: public Routine{
 
             cout << "-> Training network for " << maxIterations << " cycles ..." << endl;
             cout << "-> Learning rate: " << learningRate << ", Momentum: " << momentum << endl;
+            TimeTracker* cycleTracker = new TimeTracker();
             for(int cycle=0; cycle<maxIterations; cycle++){
-                cout << "\t> Simulating cycle " << cycle << "/" << maxIterations << " " << endl;
-                
+                cout << "\t> Simulating cycle " << cycle << "/" << maxIterations << " " << flush;
+                cout << cycleTracker->get_tracked_time(maxIterations-cycle) << endl;
+
                 int progressbar_length = stoi(params["progressbar_length"]);
                 if (VISUALIZE) cout << "> Training network:" << endl;
                 else if(Console::SHOW_PROGRESS) {

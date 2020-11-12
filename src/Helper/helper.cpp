@@ -1,3 +1,6 @@
+#ifndef helper_cpp
+#define helper_cpp
+
 #include <stdlib.h>
 #include <string>
 #include <unordered_map>
@@ -183,4 +186,5 @@ int main(){
    
     return 0;
 }
+#endif
 #endif

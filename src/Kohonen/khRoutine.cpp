@@ -28,6 +28,10 @@ class KohonenRoutine : public Routine{
         KohonenRoutine(string fileName, char delimeter): Routine(fileName, delimeter){
             init();
         }
+
+        KohonenRoutine(unordered_map<string, string> params): Routine(params){
+            init();
+        }
         
         int getLabelIndex(int* targetOutputs, int size){
             for(int i=0; i<size; i++){

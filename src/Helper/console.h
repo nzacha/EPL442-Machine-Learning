@@ -1,9 +1,57 @@
 #include <iostream>
 #include <sstream>
+#include <chrono>
 
 #ifndef console_header
 #define console_header
+typedef std::chrono::high_resolution_clock Clock;
 using namespace std;
+
+class TimeTracker{
+    private:
+        string levels[7] = {"ns.", "mc.", "ms.", "secs.", "mins.", "h.", "days"};
+        int modifier[7] = {1000, 1000, 1000, 60, 60, 24};
+        double tracked_ETA, tracked_elapsed;
+        std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<long int, std::ratio<1, 1000000000> > > tracked_time;
+        bool begun_tracking = false;
+        int tracked_level=0;
+        
+        double getTimeDiff(){
+            auto now = Clock::now();
+            double diff = std::chrono::duration_cast<std::chrono::nanoseconds>(now-tracked_time).count();
+            tracked_time = now;
+            return diff;
+        }
+
+    public:
+        int updateTimeInNanoSeconds = 200000000;
+    
+        TimeTracker(){};
+
+        string  get_tracked_time(int jobsRemaining){
+            double time_taken = getTimeDiff();
+            tracked_elapsed += time_taken;
+            if(!begun_tracking) {
+                begun_tracking = true;
+                return "";
+            }
+            if(tracked_elapsed > 200000000){
+                tracked_elapsed = 0;
+                tracked_ETA = (time_taken) * jobsRemaining;
+                tracked_level = 0;
+
+                while(tracked_ETA / modifier[tracked_level] > 1){
+                    tracked_ETA /= modifier[tracked_level];
+                    tracked_level++;
+                }
+            }
+
+            stringstream ret;
+            ret.precision(2);
+            ret << "ETA: " << fixed << tracked_ETA << " " << levels[tracked_level] << flush;
+            return ret.str();
+        }
+};
 
 namespace Console{
     bool SHOW_PROGRESS = false;
@@ -64,11 +112,13 @@ namespace Console{
         cout << "\e[5m" << flush;
     }
 
+    TimeTracker progressbarTracker;
     int progressbar_length = 0, textSize = 0;
-    static int print_progressbar(int progress, float percentage, int job, int jobs_size){
+    int print_progressbar(int progress, float percentage, int job, int jobs_size){
         if(!SHOW_PROGRESS) return 0;
-
-        stringstream pb; 
+        
+        stringstream pb;
+        pb.precision(2); 
 
         //print progressbar
         pb << "=> [";
@@ -79,9 +129,11 @@ namespace Console{
         pb << "] " << flush;
         
         //print label
-        pb.precision(2);
         pb << job << "/" << jobs_size << " (" << fixed << (percentage * 100) << "%) " << flush;
 
+        
+        pb << progressbarTracker.get_tracked_time(jobs_size-job) << flush;
+        
         cout << pb.str() << flush;
         return pb.str().length();
     }

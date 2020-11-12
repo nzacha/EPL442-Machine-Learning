@@ -37,8 +37,9 @@ class NeuronLayer{
         string to_string() { 
             ostringstream s;
             s << "NeuronLayer " << this->name <<  ": [" << endl;
-            for(int i=0; i<size; i++)
+            for(int i=0; i<size; i++){
                 s << "\t" << neurons[i]->to_string() << endl;
+            }
             s << "]" << endl;
             return s.str();
         }

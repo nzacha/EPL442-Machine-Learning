@@ -1,7 +1,3 @@
-#ifndef main_func
-#define main_func
-#define bpRoutine_cpp
-#endif
 
 #include <stdio.h>
 #include <unistd.h>
@@ -11,23 +7,13 @@
 #include "../Helper/console.h"
 
 class BackPropagationRoutine: public Routine{
-    public:
+    private:
+        BackPropagationNetwork* bpNetwork;
+
         int* hiddenLayerSizes;
         int maxIterations, numInputNeurons, numOutputNeurons, numHiddenLayers;
         float learningRate, momentum;
-        string required_params[12] = {"maxIterations", "numInputNeurons", "numOutputNeurons", "numHiddenLayers", "learningRate", "momentum", "train_test_ratio", "progressbar_length", "trainFile", "testFile", "errors_out", "accuracy_out"};
-
-        BackPropagationNetwork* network;
-
-        void handleMissingParameter(string parameter){
-            cout << "Parameter: \"" << parameter << "\" was not defined, program exiting..." << endl;
-            exit(0);
-        }
-
-        void checkParameterExists(string parameter){
-            if(params.find(parameter) == params.end()) handleMissingParameter(parameter);
-        }
-
+        
         void init(){
             for(string s: required_params){
                 checkParameterExists(s);
@@ -55,7 +41,8 @@ class BackPropagationRoutine: public Routine{
             }
 
             //Create network
-            network = new BackPropagationNetwork(numInputNeurons, numOutputNeurons, numHiddenLayers, hiddenLayerSizes);
+            bpNetwork = new BackPropagationNetwork(numInputNeurons, numOutputNeurons, numHiddenLayers, hiddenLayerSizes); 
+            network = bpNetwork;
             if (DEBUG){
                 cout << "Printing network..." << endl;
 
@@ -66,6 +53,18 @@ class BackPropagationRoutine: public Routine{
                 cout << endl;
             }
         }
+    
+    public:
+        string required_params[12] = {"maxIterations", "numInputNeurons", "numOutputNeurons", "numHiddenLayers", "learningRate", "momentum", "train_test_ratio", "progressbar_length", "trainFile", "testFile", "errors_out", "accuracy_out"};
+
+        void handleMissingParameter(string parameter){
+            cout << "Parameter: \"" << parameter << "\" was not defined, program exiting..." << endl;
+            exit(0);
+        }
+
+        void checkParameterExists(string parameter){
+            if(params.find(parameter) == params.end()) handleMissingParameter(parameter);
+        }
 
         BackPropagationRoutine(unordered_map<string, string> params):Routine(params){
             init();
@@ -73,27 +72,6 @@ class BackPropagationRoutine: public Routine{
 
         BackPropagationRoutine(string params_in, char delimeter):Routine(params_in, delimeter){
             init();
-        }
-
-        int **train_inputs, **train_outputs;
-        int numTrainSamples;
-        int **test_inputs, **test_outputs;
-        int numTestSamples;
-        void readDataSetsFromFiles(){
-            cout << "-> Reading train set and test set from files (" << params["trainFile"] << "), (" << params["testFile"] << ") ..." << endl;
-            //Mapping training data from file
-            vector<vector<string>> train_data = readFixedSizeData(params["trainFile"], numInputNeurons + numOutputNeurons, ' ');
-            numTrainSamples = train_data.size();
-            train_inputs =  new int*[numTrainSamples];
-            train_outputs =  new int*[numTrainSamples];
-            network->setDataset(train_data, &train_inputs, &train_outputs, numInputNeurons, numOutputNeurons, numTrainSamples);
-
-            //Mapping test data from file
-            vector<vector<string>> test_data = readFixedSizeData(params["testFile"], numInputNeurons + numOutputNeurons, ' ');
-            numTestSamples = test_data.size();
-            test_inputs = new int*[numTestSamples];
-            test_outputs = new int*[numTestSamples];
-            network->setDataset(test_data, &test_inputs, &test_outputs, numInputNeurons, numOutputNeurons, numTestSamples);
         }
 
         void readUniformDataSet(vector<string> labels){
@@ -159,10 +137,10 @@ class BackPropagationRoutine: public Routine{
         //Store info to dump into file later
         pair<double, double>* successes;
         pair<double, double>* errors;
-        pair<double, double> temp;
         void run_routine(){
             successes = new pair<double, double>[maxIterations];
             errors = new pair<double, double>[maxIterations];
+            pair<double, double> temp; 
 
             cout << "-> Training network for " << maxIterations << " cycles ..." << endl;
             cout << "-> Learning rate: " << learningRate << ", Momentum: " << momentum << endl;
@@ -175,7 +153,7 @@ class BackPropagationRoutine: public Routine{
                     Console::create_progressbar(progressbar_length);
                 }
                     
-                temp = network->trainNetwork(learningRate, momentum, numTrainSamples, train_inputs, train_outputs);
+                temp = bpNetwork->trainNetwork(learningRate, momentum, numTrainSamples, train_inputs, train_outputs);
                 successes[cycle].first = temp.first;
                 errors[cycle].first = temp.second;
                 if(VISUALIZE) cout << "> Training done... " << endl << endl;
@@ -185,7 +163,7 @@ class BackPropagationRoutine: public Routine{
                     Console::clear_line();
                     Console::create_progressbar(progressbar_length);
                 }
-                temp = network->evaluateNetwork(numTestSamples, test_inputs, test_outputs);
+                temp = bpNetwork->evaluateNetwork(numTestSamples, test_inputs, test_outputs);
                 successes[cycle].second = temp.first;
                 errors[cycle].second = temp.second;
                 if(VISUALIZE) cout << "> Testing done... " << endl << endl;
@@ -212,16 +190,18 @@ class BackPropagationRoutine: public Routine{
             }
             Routine::writeResults(params["errors_out"], params["accuracy_out"], out_errors.str(), out_successes.str());
         }
+
+        void readDataSetsFromFiles(){
+            Routine::readDataSetsFromFiles(numInputNeurons, numOutputNeurons);
+        }
 };
 
-#ifdef bpRoutine_cpp
+#ifndef runner_cpp
 int main(){
     cout << "bpRoutine.cpp" << endl;
 
-    bool createDatasets = true;
-
     BackPropagationRoutine* routine = new BackPropagationRoutine("parameters.txt", ' ');
-    if(createDatasets){
+    if(stoi(routine->params["createDatasets"]) != 0){
         vector<string> labels;
         for(char c='A'; c<='Z'; c++)
             labels.push_back(string(1,c)); 

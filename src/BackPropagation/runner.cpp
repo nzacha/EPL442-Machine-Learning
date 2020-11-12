@@ -1,7 +1,4 @@
-#ifndef main_func
-#define main_func
 #define runner_cpp
-#endif
 
 #include <iostream> 
 #include <thread>

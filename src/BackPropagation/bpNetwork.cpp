@@ -1,21 +1,7 @@
-#include <stdlib.h>
-#include <iostream>
-#include <sstream>
-#include <time.h>
-#include <unordered_map>
-#include <vector>
-
-#include "../Helper/network.h"
-#include "../Helper/console.h"
-
-using namespace std;
-
-#define VISUALIZE false
-#define VISUALIZE_ALL false
-#define VISUALIZATION_ITERATION_INTERVAL 20 
+#include "../Helper/neuralNetwork.h"
 
 //The network representation in neuron layers
-class BackPropagationNetwork{
+class BackPropagationNetwork : public NeuralNetwork{
     public:
         int numInputNeurons, numOutputNeurons, numHiddenLayers;
         int* hiddenLayerSizes;
@@ -26,13 +12,6 @@ class BackPropagationNetwork{
         NeuronLayer** neuronLayers;
         NeuronLayer* outputs;
         Bias* bias;
-
-        //Connects 2 nodes with specified weight
-        void addConnections(Node* leftNode, Node* rightNode, float weight){
-            Connection* connection = new Connection(leftNode, rightNode, weight);
-            leftNode->addRightPair(connection);
-            rightNode->addLeftPair(connection);
-        }
 
         //Creates a neural network with the specified parameters
         //Receives the number of input neurons, the number of output neurons and the number of hidden layers as well as the number of
@@ -291,22 +270,5 @@ class BackPropagationNetwork{
                 cout << "\tOutput " << i << ": " << outputs->getNeuron(i)->value << endl;
             }
             cout << endl;
-        }
-        
-        //Fills input and output values retrieved from unlabeled map
-        void setDataset(vector<vector<string>> dataValues, int*** inputValues, int*** outputValues, int numInputNeurons, int numOutputNeurons, int numInputs){
-            int** inputs = *(inputValues);
-            int** outputs = *(outputValues);
-            for(int i=0; i<numInputs; i++){
-                inputs[i] = new int[numInputNeurons];
-                outputs[i] = new int[numOutputNeurons];
-                vector<string> data = dataValues.at(i);
-                for(int j=0; j<numInputNeurons; j++){
-                    inputs[i][j] = stoi(data.at(j));
-                }
-                for(int j=numInputNeurons; j<numInputNeurons + numOutputNeurons; j++){
-                    outputs[i][j-numInputNeurons] = stoi(data.at(j));
-                }
-            }
         }
 };

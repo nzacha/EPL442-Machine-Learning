@@ -14,9 +14,9 @@ class Node;
 class Connection{
     public:
         Node *left, *right;
-        float weight, prevWeight = 0;
+        double weight, prevWeight = 0;
         
-        Connection(Node* left, Node* right, float weight){
+        Connection(Node* left, Node* right, double weight){
             this->left = left;
             this->right = right;
             this->weight = weight; 
@@ -29,11 +29,16 @@ class Connection{
 class Node{
     public:
         string name;
-        float value = 0, learningDelta;
+        double value = 0, learningDelta;
         list <Connection*> connsLeft, connsRight;
+        Connection** directConnections;
 
         Node(string name){
             this->name = name;
+        }
+
+        void setDirectConnections(Connection** connections){
+            this->directConnections = connections;
         }
 
         //Adds a right connection to nodes right connection list
@@ -80,6 +85,7 @@ class Node{
         string to_string() { 
             ostringstream s;
             
+            cout << name << endl;
             s << "Node: " << name << ": [";
             s << "{left: ";
             for(Connection* conn: connsLeft){
@@ -102,10 +108,13 @@ inline string Connection::to_string() {
     return s.str();
 }
 
+int inputID = 0;
 //Represents an input neuron of the network
 class Input : public Node{
     public:
+        int id;
         Input(string name):Node(name){
+            this->id = inputID++;
         }
 };
 

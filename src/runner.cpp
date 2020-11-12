@@ -17,11 +17,21 @@ void activateOutputStream(){
 
 enum Program{None=-1, BackPropagation=1, Kohonen=2};
 
-void createStandardBPRoutine(int index, unordered_map<string, string> params, bool createDatasets){
-	params["errors_out"] = params["dir_out"] + "/" + params["errors_out"] + "_" + to_string(index) +".txt";
-	params["accuracy_out"] = params["dir_out"] + "/" + params["accuracy_out"] + "_" + to_string(index) +".txt";
-	BackPropagationRoutine* routine = new BackPropagationRoutine(params);
-    if(createDatasets){
+void createRoutine(int program, int index, unordered_map<string, string> params, bool createDatasets){
+	Routine* routine;
+    params["errors_out"] = params["errors_out"] + "_" + to_string(index);
+	params["accuracy_out"] = params["accuracy_out"] + "_" + to_string(index);
+	
+	if(program = Program::BackPropagation){
+		routine = new BackPropagationRoutine(params);
+	}else if(program = Program::Kohonen){
+		routine = new KohonenRoutine(params);
+	}else{
+		cout << "Program does not exist..." << endl;
+		exit(0);
+	}
+
+	if(createDatasets){
         vector<string> labels;
         for(char c='A'; c<='Z'; c++)
             labels.push_back(string(1,c)); 
@@ -31,14 +41,6 @@ void createStandardBPRoutine(int index, unordered_map<string, string> params, bo
     routine->run_routine();
     routine->writeResults();
 	cerr << "Thread " << index << " finished" << endl;
-}
-
-void createRoutine(int program, int index, unordered_map<string, string> params, bool createDatasets){
-	if(program = Program::BackPropagation){
-		
-	}else if(program = Program::Kohonen){
-
-	}
 }
 
 void printHelp(){
@@ -103,7 +105,7 @@ int main(int argc, char** argv){
 		}
 	}
 	
-	cout << endl << "runner.cpp" << endl;
+	cout << "runner.cpp" << endl;
 	switch(program){
 		case -1:
 			cout << "No program chosen, exiting..." << endl << endl;
@@ -128,11 +130,20 @@ int main(int argc, char** argv){
 		thread threads[numThreads];
 		Routine* routines[numThreads];
 		
-		ne = new BackPropagationRoutine("parameters.txt", ' ');
+		switch(program){
+			case BackPropagation:
+				for(int i=0; i<numThreads; i++)
+					routines[i] = new BackPropagationRoutine("parameters.txt", ' ');
 				break;
 			case Kohonen:
-				routine = new KohonenRoutine("parameters.txt", ' ');
-				for(int i=0; i<numThreads; i++){
+				for(int i=0; i<numThreads; i++)
+					routines[i] = new KohonenRoutine("parameters.txt", ' ');
+				break;
+			default:
+				cerr << "No such program exists..." << endl;
+				return 1;
+		}
+		for(int i=0; i<numThreads; i++){
 			cerr << "Thread " << i << " starts" << endl;
 			threads[i] = thread(createRoutine, program, i, params, createDatasets);
 		}

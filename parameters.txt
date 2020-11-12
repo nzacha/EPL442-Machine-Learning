@@ -17,8 +17,7 @@ testFile inputs/testing.txt
 datasetFile inputs/letter-recognition.txt
 dataSetMinValue 0
 dataSetMaxValue 15
-dir_out results
-errors_out errors
+errors_out results/errors
+accuracy_out results/successrate
 labels_prelvq_out lvq_labels
-labels_out labels
-accuracy_out successrate
+labels_out results/labels

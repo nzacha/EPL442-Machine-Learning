@@ -74,7 +74,7 @@ class Routine{
             unordered_map<string, vector<vector<string>>> data = readLabeledVarSizeData(params["datasetFile"], ',');
             vector<pair<string, vector<string>>> trainset, testset;
             
-            cout << "-> Creating train set and test set files from uniform, labeled dataset ..." << endl;
+            cout << "-> Creating train set and test set files from uniform, labeled dataset (" << params["datasetFile"] << ") -> (" << params["trainFile"] << "), (" << params["testFile"] << ") ..." << endl;  
             //split data into train and test data for every input type
             for(string s : labels){
                 int datasize = data[s].size();

@@ -105,9 +105,6 @@ class BackPropagationRoutine: public Routine{
                 }
                 if(cycle != maxIterations-1 && cycle % VISUALIZATION_ITERATION_INTERVAL == 0) Console::ring_bell();
             }
-
-            cout << endl << "Routine DONE..." << endl << endl;
-            //system("./play_clip.sh");
         }
 
         void writeResults(){

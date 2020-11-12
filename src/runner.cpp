@@ -46,6 +46,8 @@ void printHelp(){
 	cout << "\t-t [number of threads] : to enable threaded execution with specified number of threads" << endl;
 	cout << "\t-progress : to show progress bar" << endl;
 	cout << "\t-c : create input and train set from dataset" << endl;
+	cout << "\t-sound : play sound when execution ends" << endl;
+	cout << "\t-mail : send me a personal mail when execution ends" << endl;
 	cout << "\t-p [program number] : to choose a program from list of programs" << endl;
 	cout << "\t[program name] : to choose a program from list of programs" << endl;
 	cout << "\tPrograms : " << endl;
@@ -57,7 +59,7 @@ void printHelp(){
 int main(int argc, char** argv){ 
 	int numThreads = 1;
 	Program program = None;
-	bool createDatasets = false;
+	bool createDatasets = false, play_sound = false, send_mail = false;
 
 	for(int i=0; i<argc; i++){
 		string arg = argv[i];
@@ -92,10 +94,16 @@ int main(int argc, char** argv){
 			program = Program::BackPropagation;
 		}else if(arg == "kohonen"){
 			program = Program::Kohonen;
+		}else if(arg == "-mail"){
+			send_mail = true;
+			cout << "- Mail will be sent on execution ends" << endl;
+		}else if(arg == "-sound"){
+			play_sound = true;
+			cout << "- Sound will be played when execution ends" << endl;
 		}
 	}
 	
-	cout << "runner.cpp" << endl;
+	cout << endl << "runner.cpp" << endl;
 	switch(program){
 		case -1:
 			cout << "No program chosen, exiting..." << endl << endl;
@@ -120,7 +128,11 @@ int main(int argc, char** argv){
 		thread threads[numThreads];
 		Routine* routines[numThreads];
 		
-		for(int i=0; i<numThreads; i++){
+		ne = new BackPropagationRoutine("parameters.txt", ' ');
+				break;
+			case Kohonen:
+				routine = new KohonenRoutine("parameters.txt", ' ');
+				for(int i=0; i<numThreads; i++){
 			cerr << "Thread " << i << " starts" << endl;
 			threads[i] = thread(createRoutine, program, i, params, createDatasets);
 		}
@@ -143,12 +155,24 @@ int main(int argc, char** argv){
 				cout << "No such program exists..." << endl;
 				exit(0);
 		}
+		if(createDatasets){
+			vector<string> labels;
+			for(char c='A'; c<='Z'; c++)
+				labels.push_back(string(1,c)); 
+			routine->readUniformDataSet(labels);
+		}
 		routine->readDataSetsFromFiles();
 		routine->run_routine();
 		routine->writeResults();
     	
 		activateOutputStream();
 		cout << "Routine DONE" << endl;
+		if(send_mail){
+			system("./send_mail.sh");
+		}
+		if(play_sound){
+			system("./play_sound.sh");
+		}
 	}
 	return 0; 
 }

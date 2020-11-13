@@ -123,21 +123,3 @@ class BackPropagationRoutine: public Routine{
             Routine::readDataSetsFromFiles(numInputNeurons, numOutputNeurons);
         }
 };
-
-#ifndef runner_cpp
-int main(){
-    cout << "bpRoutine.cpp" << endl;
-
-    BackPropagationRoutine* routine = new BackPropagationRoutine("parameters.txt", ' ');
-    if(stoi(routine->params["createDatasets"]) != 0){
-        vector<string> labels;
-        for(char c='A'; c<='Z'; c++)
-            labels.push_back(string(1,c)); 
-        routine->readUniformDataSet(labels);
-    }
-    routine->readDataSetsFromFiles();
-    routine->run_routine();
-    routine->writeResults();
-    return 0;
-}
-#endif

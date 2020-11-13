@@ -62,7 +62,7 @@ int main(int argc, char** argv){
 	int numThreads = 1;
 	Program program = None;
 	bool createDatasets = false, play_sound = false, send_mail = false;
-
+	
 	for(int i=0; i<argc; i++){
 		string arg = argv[i];
 		if(arg == "-q" || arg == "-quiet"){
@@ -172,7 +172,6 @@ int main(int argc, char** argv){
 				labels.push_back(string(1,c)); 
 			routine->readUniformDataSet(labels);
 		}
-
 	    routine->readDataSetsFromFiles();
 		routine->run_routine();
 		routine->writeResults();

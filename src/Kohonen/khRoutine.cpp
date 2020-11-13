@@ -19,6 +19,8 @@ class KohonenRoutine : public Routine{
             khNetwork = new KohonenNetwork(input_vector_size, map_width, map_height);
             network = khNetwork;
 
+            this->numInputNeurons = stoi(params["numInputNeurons"]);
+            this->numOutputNeurons = stoi(params["numOutputNeurons"]);
             this->maxIterations = stoi(params["maxIterations"]);
             this->INITIAL_LEARNING_RATE = stod(params["learningRate"]);
             this->INITIAL_NEIGHBOURHOOD_WIDTH = stod(params["neighbourhoodWidth"]);
@@ -159,27 +161,6 @@ class KohonenRoutine : public Routine{
         }
 
         void readDataSetsFromFiles(){
-            Routine::readDataSetsFromFiles(khNetwork->INPUT_VECTOR_SIZE, stoi(params["numOutputNeurons"]));
+            Routine::readDataSetsFromFiles(numInputNeurons, numOutputNeurons);
         }
 };
-
-#ifndef runner_cpp
-int main(){
-    Console::SHOW_PROGRESS = true;
-    cout << "khRoutine.cpp" << endl;
-
-    bool createDatasets = true;
-
-    KohonenRoutine* routine = new KohonenRoutine("parameters.txt", ' ');
-    if(stoi(routine->params["createDatasets"]) != 0){
-        vector<string> labels;
-        for(char c='A'; c<='Z'; c++)
-            labels.push_back(string(1,c)); 
-        routine->readUniformDataSet(labels);
-    }
-    routine->readDataSetsFromFiles();
-    routine->run_routine();
-    routine->writeResults();
-    return 0;
-}
-#endif

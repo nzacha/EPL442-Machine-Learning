@@ -10,15 +10,15 @@ using namespace std;
 class TimeTracker{
     private:
         string levels[7] = {"ns.", "mc.", "ms.", "secs.", "mins.", "h.", "days"};
-        int modifier[7] = {1000, 1000, 1000, 60, 60, 24};
-        double tracked_ETA, tracked_elapsed;
+        int modifier[6] = {1000, 1000, 1000, 60, 60, 24};
+        long long unsigned int tracked_ETA, tracked_elapsed;
         std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<long int, std::ratio<1, 1000000000> > > tracked_time;
         bool begun_tracking = false;
         int tracked_level=0;
         
         double getTimeDiff(){
             auto now = Clock::now();
-            double diff = std::chrono::duration_cast<std::chrono::nanoseconds>(now-tracked_time).count();
+            long long unsigned int diff = std::chrono::duration_cast<std::chrono::nanoseconds>(now-tracked_time).count();
             tracked_time = now;
             return diff;
         }
@@ -29,7 +29,7 @@ class TimeTracker{
         TimeTracker(){};
 
         string  get_tracked_time(int jobsRemaining){
-            double time_taken = getTimeDiff();
+            long long unsigned int time_taken = getTimeDiff();
             tracked_elapsed += time_taken;
             if(!begun_tracking) {
                 begun_tracking = true;

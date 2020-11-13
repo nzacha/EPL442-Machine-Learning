@@ -1,7 +1,7 @@
 numHiddenLayers 1
 layer-0 120
 layer-1 35
-maxIterations 300
+maxIterations 1
 mapWidth 60
 mapHeight 60
 createDatasets 1
@@ -19,5 +19,5 @@ dataSetMinValue 0
 dataSetMaxValue 15
 errors_out results/errors
 accuracy_out results/successrate
-labels_prelvq_out lvq_labels
+labels_prelvq_out results/lvq_labels
 labels_out results/labels

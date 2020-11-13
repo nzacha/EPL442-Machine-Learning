@@ -110,7 +110,7 @@ class KohonenRoutine : public Routine{
                 Console::create_progressbar(progressbar_length);
             }
             //Fine tune (LVQ) labels
-            khNetwork->fineTune(gainTerm, pre_lvq_labels, train_inputs, train_outputs, numTrainSamples, numTargetOutputs);
+            khNetwork->fineTune(INITIAL_LEARNING_RATE, pre_lvq_labels, train_inputs, train_outputs, numTrainSamples, numTargetOutputs);
             if(Console::SHOW_PROGRESS){
                 Console::clear_line();
             }
@@ -148,8 +148,8 @@ class KohonenRoutine : public Routine{
             stringstream out_pre_labels, out_labels;
             for(int y=0; y<khNetwork->MAP_HEIGHT; y++){
                 for(int x=0; x<khNetwork->MAP_WIDTH; x++){
-                    out_pre_labels << getLabelIndex(pre_lvq_labels[y][x]->first, numTargetOutputs) << " ";
-                    out_labels << getLabelIndex(labels[y][x]->first, numTargetOutputs) << " ";
+                    out_pre_labels << getLabelIndex('A' + pre_lvq_labels[y][x]->first, numTargetOutputs) << "\t";
+                    out_labels << getLabelIndex('A' + labels[y][x]->first, numTargetOutputs) << "\t";
                 }   
                 out_pre_labels << endl;
                 out_labels << endl;

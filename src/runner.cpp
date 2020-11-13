@@ -172,7 +172,8 @@ int main(int argc, char** argv){
 				labels.push_back(string(1,c)); 
 			routine->readUniformDataSet(labels);
 		}
-		routine->readDataSetsFromFiles();
+
+	    routine->readDataSetsFromFiles();
 		routine->run_routine();
 		routine->writeResults();
     	

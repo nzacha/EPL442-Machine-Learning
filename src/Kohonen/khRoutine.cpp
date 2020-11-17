@@ -150,8 +150,8 @@ class KohonenRoutine : public Routine{
             stringstream out_pre_labels, out_labels;
             for(int y=0; y<khNetwork->MAP_HEIGHT; y++){
                 for(int x=0; x<khNetwork->MAP_WIDTH; x++){
-                    out_pre_labels << getLabelIndex('A' + pre_lvq_labels[y][x]->first, numTargetOutputs) << "\t";
-                    out_labels << getLabelIndex('A' + labels[y][x]->first, numTargetOutputs) << "\t";
+                    out_pre_labels << static_cast<char>('A' + getLabelIndex(pre_lvq_labels[y][x]->first, numTargetOutputs)) << "\t";
+                    out_labels << static_cast<char> ('A' + getLabelIndex(labels[y][x]->first, numTargetOutputs)) << "\t";
                 }   
                 out_pre_labels << endl;
                 out_labels << endl;

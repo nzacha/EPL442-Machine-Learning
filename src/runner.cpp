@@ -66,6 +66,7 @@ int main(int argc, char** argv){
 	for(int i=0; i<argc; i++){
 		string arg = argv[i];
 		if(arg == "-q" || arg == "-quiet"){
+			cout << "Silencing output stream" << endl;
 			silenceOutputStream();
 		}else if(arg == "-t" ){
 			arg = argv[++i];

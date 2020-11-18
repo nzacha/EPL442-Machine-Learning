@@ -1,7 +1,7 @@
 numHiddenLayers 1
 layer-0 120
 layer-1 35
-maxIterations 200
+maxIterations 1
 mapWidth 60
 mapHeight 60
 numInputNeurons 16

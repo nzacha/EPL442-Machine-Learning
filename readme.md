@@ -1,33 +1,28 @@
-To compile: 
-	
-	g++ -g -std=c++11 src/BackPropagation/backpropagation.cpp -o executable.out
-
-To run:
-
-	./executable.out
+To compile use the compile script
+	./compile.sh
 	
 To see program options:
+	./a.out -h
 	
-	./executable.out -h
+To run a simple routine:
+	./a.out [routine]
 	
-To see the magic
-
-	./executable.out -progress
-
-For threaded - simultaneous execution:
+Avaliable routines:
+	backpropagation
+	kohonen
 	
-	./execute.out -t [no. of threads]
+For threaded - simultaneous execution (Experimental):
+	./a.out -t [no. of threads]
 
-Netowrk parameters can be altered from the 'parameters.txt' file
+Network and other parameters can be altered from the 'parameters.txt' file
 	
 The project includes multiple scripts that:
-
 	- compile code
 	- send my a personal email
 	- play a sound
-	- runs a routine of multiple scripts to:
-		> compile & execute program. 
-		> Train the network and evaluate results. 
-		> Notify me when routine is done
 	
 This project also includes a self-made library that dynamically prsents the progress of each step in-line on the console using ANSI escape codes.
+
+To see the magic
+	./a.out -progress
+

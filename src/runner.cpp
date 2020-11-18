@@ -181,10 +181,10 @@ int main(int argc, char** argv){
 		cout << "Routine DONE" << endl;
 		int retval;
 		if(send_mail){
-			retval = system("./../send_mail.sh");
+			retval = system("./send_mail.sh");
 		}
 		if(play_sound){
-			retval = system("./../play_sound.sh");
+			retval = system("./play_sound.sh");
 		}
 	}
 	return 0; 

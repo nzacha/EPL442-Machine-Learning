@@ -40,7 +40,7 @@ class TimeTracker{
                 tracked_ETA = (time_taken) * jobsRemaining;
                 tracked_level = 0;
 
-                while(tracked_ETA / modifier[tracked_level] > 1){
+                while(tracked_ETA / modifier[tracked_level] >= 1){
                     tracked_ETA /= modifier[tracked_level];
                     tracked_level++;
                 }

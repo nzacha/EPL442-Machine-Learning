@@ -12,6 +12,7 @@ class KohonenRoutine : public Routine{
         int maxIterations;
         double INITIAL_LEARNING_RATE, INITIAL_NEIGHBOURHOOD_WIDTH;
 
+        //iniitalizes global variables from 'parameters.txt' file
         void init(){
             int input_vector_size = stoi(params["numInputNeurons"]);
             int map_width = stoi(params["mapWidth"]);
@@ -27,14 +28,17 @@ class KohonenRoutine : public Routine{
         }
 
     public:
+        //Creates a new Kohonen Routine from a parameters file with given delimeter
         KohonenRoutine(string fileName, char delimeter): Routine(fileName, delimeter){
             init();
         }
 
+        //Creates a new Kohonen Routine from given paramaters in map form
         KohonenRoutine(unordered_map<string, string> params): Routine(params){
             init();
         }
         
+        //returns the label ('1') from a list of zeroes ('0')
         int getLabelIndex(int* targetOutputs, int size){
             for(int i=0; i<size; i++){
                 if(targetOutputs[i] == 1) return i;
@@ -42,11 +46,23 @@ class KohonenRoutine : public Routine{
             return -1;
         }
         
+        
+        /* 
+         * Trains and Tests network repeateadly for 'maxIterations'.
+         * Logs error of each iteration.
+         * At the end of 'maxIteration' cycles then labeling ocurrs,
+         * after than fine-tuning (LVQ) ocurrs and after that labeling
+         * happens once again to check if LVQ had an effect on the results
+         */
         pair<int*, double*> ***pre_lvq_labels,  ***labels;
         pair<double, double>* errors;
         void run_routine(){
-            errors = new pair< double,double >[maxIterations];
+            double** normalized_train_inputs = khNetwork->normalizeInputs(train_inputs, numTrainSamples);
+            double** normalized_test_inputs = khNetwork->normalizeInputs(train_inputs, numTestSamples);
+            
+            errors = new pair< double,double >[maxIterations + 1];
             pair< pair<int,int>,double >* temp;
+            pair< pair< pair<int,int>,double >*, double>* ret_temp;
             int numTargetOutputs = stoi(params["numOutputNeurons"]);
             
             double gainTerm = INITIAL_LEARNING_RATE;
@@ -58,21 +74,18 @@ class KohonenRoutine : public Routine{
             int progressbar_length = stoi(params["progressbar_length"]);
             TimeTracker* cycleTracker = new TimeTracker(); 
             for(int cycle=0; cycle<maxIterations; cycle++){
-                cout << "> Simulating cycle " << cycle << "/" << maxIterations << " ";
-                
+                cout << "> Simulating cycle " << cycle << "/" << maxIterations << " "; 
+                cout << cycleTracker->get_tracked_time(maxIterations-cycle) << endl;
+                    
                 if (VISUALIZE) cout << endl << "> Training network:" << endl;
                 else if(Console::SHOW_PROGRESS) {
-                    cout << cycleTracker->get_tracked_time(maxIterations-cycle);
-                    cout << endl;
                     Console::create_progressbar(progressbar_length);
                 }
-                temp = khNetwork->trainNetwork(train_inputs, numTrainSamples, gainTerm, functWidth);    
-                errors[cycle].first = 0;
-                for(int i=0; i<numTrainSamples; i++){
-                    errors[cycle].first += temp[i].second;
-                    //Console::create_progressbar(progressbar_length);cout << errors[cycle].first << " <- " << temp[i].second << endl;
-                }
-                errors[cycle].first /= numTrainSamples;
+
+                //Train network
+                ret_temp = khNetwork->trainNetwork(normalized_train_inputs, numTrainSamples, gainTerm, functWidth);    
+                temp = ret_temp->first;
+                errors[cycle].first = ret_temp->second/numTrainSamples;
 
                 if(VISUALIZE) cout << "> Training done... " << endl << endl;
 
@@ -81,12 +94,11 @@ class KohonenRoutine : public Routine{
                     Console::clear_line();
                     Console::create_progressbar(progressbar_length);
                 }
-                temp = khNetwork->evaluateNetwork(test_inputs, numTestSamples);
-                errors[cycle].second = 0;
-                for(int i=0; i<numTestSamples; i++){
-                    errors[cycle].second += temp[i].second;
-                }
-                errors[cycle].second /= numTestSamples;
+
+                //Test network
+                ret_temp = khNetwork->evaluateNetwork(normalized_test_inputs, numTestSamples);
+                temp = ret_temp->first;
+                errors[cycle].second = ret_temp->second/numTestSamples;
 
                 if(VISUALIZE) cout << "> Testing done... " << endl << endl;
                 else if(Console::SHOW_PROGRESS) {
@@ -101,42 +113,39 @@ class KohonenRoutine : public Routine{
 
                 if(cycle != maxIterations-1 && cycle % VISUALIZATION_ITERATION_INTERVAL == 0) Console::ring_bell();
             }
+
+            if(Console::SHOW_PROGRESS){
+                Console::clear_line();
+            }
+            
             //label the output neurons
-            if(Console::SHOW_PROGRESS){
-                Console::clear_line();
-            }
-            //Label map
+            cout << "-> Labeling Nodes" << endl;
             pre_lvq_labels = khNetwork->label(test_inputs, test_outputs, numTestSamples);
-            if(Console::SHOW_PROGRESS){
-                Console::clear_line();
-                Console::create_progressbar(progressbar_length);
-            }
+
             //Fine tune (LVQ) labels
-            khNetwork->fineTune(INITIAL_LEARNING_RATE, pre_lvq_labels, train_inputs, train_outputs, numTrainSamples, numTargetOutputs);
+            khNetwork->fineTune(INITIAL_LEARNING_RATE/2, pre_lvq_labels, train_inputs, train_outputs, numTrainSamples, numTargetOutputs);
             if(Console::SHOW_PROGRESS){
                 Console::clear_line();
             }
+            
             //Label again
+            cout << "-> Labeling Nodes Again" << endl;
             labels = khNetwork->label(test_inputs, test_outputs, numTestSamples);
-            if(Console::SHOW_PROGRESS){
-                Console::clear_line();
-                Console::create_progressbar(progressbar_length);
-            }
-            //Run an evaluation
-            pair<pair<int, int>, double>* evaluation = khNetwork->evaluateNetwork(test_inputs, numTestSamples);
+
+            //Run an evaluation to see resulting errors
+            pair<pair< pair<int,int>, double>*, double>*  evaluation = khNetwork->evaluateNetwork(normalized_test_inputs, numTestSamples);
             if(Console::SHOW_PROGRESS) {
                 Console::clear_line();
             }
-            double evaluation_error = 0;
-            for(int i=0; i<numTestSamples; i++){
-                evaluation_error += evaluation[i].second;
-            }
-            evaluation_error /= numTestSamples;
-            
+            errors[maxIterations] = make_pair(0.0, evaluation->second/numTestSamples);
+
             cout << endl << "-> Post training error: " << errors[maxIterations-1].second << endl;
-            cout << "-> Post LVQ Evaluation error: " << evaluation_error << endl;
+            cout << "-> Post LVQ Evaluation error: " << errors[maxIterations].second << endl;
         }
 
+        /*
+         * Writes logged data into files
+         */
         void writeResults(){
             //Store reults in files
             stringstream out_errors;
@@ -160,6 +169,10 @@ class KohonenRoutine : public Routine{
             writeFile(params["labels_out"], out_labels.str());
         }
 
+        /*
+         * Reads the data set, creating the input and output dataset with given 'ratio' parameter
+         * and given input set and output set file names.
+         */
         void readDataSetsFromFiles(){
             Routine::readDataSetsFromFiles(numInputNeurons, numOutputNeurons);
         }

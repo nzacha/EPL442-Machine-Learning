@@ -2,7 +2,11 @@
 
     class ConnectionMapper{
         public:
-            //3 dimensions: 1- inputs map to 2-d array of neurons
+            /*
+             * Contains 3 dimensions of (Connection*)
+             * The first contains the input vectors
+             * The next 2 dimensions is the 2-D array of output nodes
+             */
             Connection**** connections;
             ConnectionMapper(InputLayer* inputs, NeuronLayer** map, int numInputs, int width, int height){
                 connections = new Connection***[numInputs];
@@ -17,10 +21,12 @@
                 }
             }
 
+            //Sets the specified connection between input node, and output node (x,y)
             void setConnection(int input, int x, int y, Connection* conn){
                 connections[input][y][x] = conn;
             }
 
+            //Gets the connection between specified input node, and output node (x,y)
             Connection* getConnection(int input, int x, int y){
                 return connections[input][y][x];
             }
@@ -51,19 +57,21 @@
                     neuronMap[i] = new NeuronLayer(layerName, M);
                 }
 
-                //connect inputs to neurons
-                //create connection mapper
+                //connect inputs to neurons - create connection mapper
                 connections = new ConnectionMapper(inputLayer, neuronMap, INPUT_VECTOR_SIZE, MAP_WIDTH, MAP_HEIGHT); 
             }
             
+            //Calculates the new gain term, based on given initial vlaue, current cycle and maxCycles
             double calcGainTerm(double initialGainTerm, int cycle, int maxCycles){
                 return (initialGainTerm * (1.0 - (cycle * 1.0 / maxCycles)));
             }
 
+            //Calculates the new width, based on given initial vlaue, current cycle and maxCycles
             double calcNewWidth(double initialWidth,int cycle, int maxCycles){
                 return (initialWidth / exp(cycle * 1.0 / maxCycles));
             }
 
+            //Returns the EuclideanDistance between 2 points, (x1,y1) and (x2,y2)
             int euclidianDistance(int x1, int y1, int x2, int y2){
                 return sqrt(pow(x1-x2, 2) + pow(y1-y2, 2));
             }
@@ -74,26 +82,36 @@
                 //return 1.0 / (funcWidth - euclidianDistance(x1,y1,x2,y2));
             }
 
-            void updateSingleWeight(int input, int x, int y, double value, double gain_term, double hci){
-                double weight = connections->getConnection(input, x,y)->weight;
-                double diff = value - weight; 
-                double prod = gain_term * hci * diff;
-                //if(!additive) prod*=-1;
-                connections->getConnection(input,x,y)->weight += prod;
+            /*
+             * Updates the weights of a single connection between specified input node, and output node (x,y)
+             * The weight is calculated from given value, gain_term and neighbourhood function value
+             */
+            void updateSingleWeight(int input, int x, int y, double value, double gain_term, double hci, bool additive){
+                if(additive)
+                    connections->getConnection(input,x,y)->weight += gain_term * hci * (value - connections->getConnection(input, x,y)->weight);
+                else
+                    connections->getConnection(input,x,y)->weight -= gain_term * hci * (value - connections->getConnection(input, x,y)->weight);
             }
 
-            //for every neighbouring node update values
+            /*
+             * Updates values of all nodes in the map, based on their distance from the winner (x,y),
+             * the given values, gain term and neighbourhood function width
+             */
             void updateValues(double* values, double gain_term, int winner_x, int winner_y, double funcWidth){
-                for(int i=0; i<INPUT_VECTOR_SIZE; i++){
-                    for(int y=0; y<MAP_HEIGHT; y++){
-                        for(int x=0; x<MAP_WIDTH; x++){
-                            double hci = neighbourhoodFuct(x,y,winner_x,winner_y, funcWidth);
-                            updateSingleWeight(i, x, y, values[i], gain_term, hci);
+                for(int y=0; y<MAP_HEIGHT; y++){
+                    for(int x=0; x<MAP_WIDTH; x++){
+                        double hci = neighbourhoodFuct(x,y,winner_x,winner_y, funcWidth);
+                        for(int i=0; i<INPUT_VECTOR_SIZE; i++){
+                            updateSingleWeight(i, x, y, values[i], gain_term, hci, true);
                         }
                     }
                 }
             }
-
+ 
+            /*
+             * Normalizes a list of int inputs of given size into a list of doubles in the range of [0, 1]
+             * With given minimum and maximum values
+             */
             double* normalize(int* inputs, int size, int min, int max){
                 double* normalized = new double[size];
                 for(int i=0; i<size; i++){
@@ -102,6 +120,10 @@
                 return normalized;
             }
 
+            /*
+             * Normalizes a list of int inputs of given size into a list of doubles in the range of [0, 1]
+             * With min and max values from the set given
+             */
             double* normalize(int* inputs, int size){
                 double* normalized = new double[size];
                 int max = INT32_MIN, min = INT32_MAX;
@@ -117,6 +139,17 @@
                 return normalized;
             }
 
+            double** normalizeInputs(int** inputs, int numInputs){
+                double** retVal = new double*[numInputs];
+                for(int i=0; i<numInputs; i++){
+                    retVal[i] = normalize(inputs[i], INPUT_VECTOR_SIZE, 0, 15);
+                }
+                return retVal;
+            }
+
+            /*
+             * Calculates the distance between normalized_input (given input vector values) and node (x,y)
+             */
             double distanceVectorNode(double* normalized_input, int x, int y){
                 double d=0;
                 for(int i=0; i<INPUT_VECTOR_SIZE; i++){
@@ -125,7 +158,9 @@
                 return d;
             }
 
-            //for specified normalized input vector find winner node
+            /*
+             * Calculates winner (x,y) for given normalized inputs
+             */
             pair< pair<int,int>, double> simulate(double* normalized_inputs){
                 pair<int,int> winner = make_pair(INT32_MAX,INT32_MAX);
                 double distances[MAP_HEIGHT][MAP_WIDTH] = {0};
@@ -134,28 +169,18 @@
                     inputLayer->getNeuron(i)->value = normalized_inputs[i];
                 }
 
+                double min = __LONG_LONG_MAX__, d;
+                Connection* conn;
                 //for every neuron calc total distance from inputs
                 for(int y=0; y<MAP_HEIGHT; y++){
                     for(int x=0; x<MAP_WIDTH; x++){
-                        list<Connection*> node_conns = neuronMap[y]->getNeuron(x)->connsLeft;
-                        for(Connection* conn : node_conns){
-                            Input* input = (Input*) (conn->left);
-                            double d = pow(input->value - conn->weight ,2);
-                            if(conn->weight < 0){
-                                cout << input->value << " - " << conn->weight << " => " << d << endl;
-                                exit(0);
-                            }
-                            distances[y][x] += d;
+                        d = 0;
+                        for(int i=0; i<INPUT_VECTOR_SIZE;i++){
+                            conn = connections->getConnection(i,x,y);
+                            d+= pow(conn->left->value - conn->weight ,2);
                         }
-                    }
-                }
-
-                double min = __LONG_LONG_MAX__;
-                //find winner
-                for(int y=0; y<MAP_HEIGHT; y++){
-                    for(int x=0; x<MAP_WIDTH; x++){
-                        if(distances[y][x] < min){
-                            min = distances[y][x];
+                        if(d < min){
+                            min = d;
                             winner.first = x;
                             winner.second = y;
                         }
@@ -166,31 +191,38 @@
                 return make_pair(winner,min);
             }
 
-            pair< pair<int,int>, double>* trainNetwork(int** inputs, int inputSize, double gainTerm, double funcWidth){                
+            /*
+             * Trains network with given inputs, initial gain term neighhbourhood width
+             * returns a pair of values containing the winners and the error
+             */
+            pair<pair< pair<int,int>, double>*, double>* trainNetwork(double** inputs, int inputSize, double gainTerm, double funcWidth){                
                 pair< pair<int,int>, double>* winners = new pair< pair<int,int>, double>[inputSize];
-                double* normalized_inputs;
+                pair< pair< pair<int,int>, double>*, double>* retVal = new pair< pair< pair<int,int>, double>*, double>(winners, 0);
                 for(int input=0; input<inputSize; input++){
                     if(Console::SHOW_PROGRESS){
                         Console::clear_line();
                         cout << "\t> Training data... " << flush;
                         Console::update_progressbar(input+1, inputSize);
                     }
-                    normalized_inputs = normalize(inputs[input], INPUT_VECTOR_SIZE);
                     //find winner node for specified input vector
-                    winners[input] = simulate(normalized_inputs);
-                    
+                    winners[input] = simulate(inputs[input]);
+                    retVal->second += winners[input].second;
                     //update values for winner
-                    updateValues(normalized_inputs, gainTerm, winners[input].first.first, winners[input].first.second, funcWidth);
+                    updateValues(inputs[input], gainTerm, winners[input].first.first, winners[input].first.second, funcWidth);
                 } 
 
                 //for(int i=0; i<inputSize; i++)
                 //cout << fixed << "winner: " << winners[i].first.first << "," << winners[i].first.second<< " -  ditance: " << winners[i].second << endl;
-                return winners;
+                return retVal;
             }
 
-            pair< pair<int,int>, double>* evaluateNetwork(int** inputs, int inputSize){
+            /*
+             * Tests network with given inputs
+             * returns a pair of values containing the winners and the error
+             */
+            pair<pair< pair<int,int>, double>*, double>*  evaluateNetwork(double** inputs, int inputSize){
                 pair< pair<int,int>, double>* winners = new pair< pair<int,int>, double>[inputSize];;
-                double* normalized_inputs;
+                pair< pair< pair<int,int>, double>*, double>* retVal = new pair< pair< pair<int,int>, double>*, double>(winners, 0);
                 for(int input=0; input<inputSize; input++){
                     if(Console::SHOW_PROGRESS){
                         Console::clear_line();
@@ -198,11 +230,11 @@
                         Console::update_progressbar(input+1, inputSize);
                     }
 
-                    normalized_inputs = normalize(inputs[input], INPUT_VECTOR_SIZE);
                     //find winner node for specified input vector
-                    winners[input] = simulate(normalized_inputs);
+                    winners[input] = simulate(inputs[input]);
+                    retVal->second += winners[input].second;
                 }
-                return winners;
+                return retVal;
             }
 
             /*
@@ -229,10 +261,6 @@
                     normalized_data = normalize(data[i], INPUT_VECTOR_SIZE);
                     for(int y=0; y<MAP_HEIGHT; y++){
                         for(int x=0; x<MAP_WIDTH; x++){
-                            if(Console::SHOW_PROGRESS){
-                                Console::clear_line();
-                                cout << "\t> Labeling node (" << x << "," << y << ")... " << flush;
-                            }
                             d = distanceVectorNode(normalized_data, x, y);
                             if(minDistances[y][x] > d){
                                 minDistances[y][x] = d;
@@ -242,13 +270,6 @@
                         }
                     }
                 }
-                /*
-                for(int y=0; y<MAP_HEIGHT; y++){
-                    for(int x=0; x<MAP_WIDTH; x++){
-                        cout << minDistances[y][x] <<  " > " << labels[y][x]->first << "|" << labels[y][x]->second << "\t";
-                    }
-                    cout << endl;
-                }*/
                 return labels;
             }
 
@@ -271,6 +292,10 @@
                 return 0;
             }
 
+            /*
+             * Liner Vector Quantisation, receives a gain term, a map(2D) of labels, the data set, and the target inputs
+             * Processes all data and fine-tunes output vectors based on target output
+             */
             void fineTune(double gainTerm, pair<int*,double*>*** labels, int** data, int** targetOutputs, int numSamples, int numTargetOutputs){
                 double* normalized_data;
                 pair< pair<int,int>, double> winner;
@@ -289,7 +314,7 @@
                         exit(0);
                     }
                     for(int input=0; input<INPUT_VECTOR_SIZE; input++)
-                        updateSingleWeight(input, x, y, labels[y][x]->second[input], gainTerm, 1);
+                        updateSingleWeight(input, x, y, labels[y][x]->second[input], gainTerm, 1, false);
                 }
             }
 
@@ -304,6 +329,7 @@
             void printNeurons(){
             }
 
+            //Returns the network description as a string
             string networkDescription(){
                 stringstream ret;
                 ret << "Kohonen SOM network:" << endl;

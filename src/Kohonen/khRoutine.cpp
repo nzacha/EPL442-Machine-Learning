@@ -153,6 +153,7 @@ class KohonenRoutine : public Routine{
             for(int i=0; i<maxIterations; i++){
                 out_errors << fixed << (i+1) << "\t" << errors[i].first << "\t" << errors[i].second << endl;
             }
+            out_errors << fixed << maxIterations << "\tLVQ\t" << errors[maxIterations].second << endl;
             writeFile(params["errors_out"], out_errors.str());
             
             int numTargetOutputs = stoi(params["numOutputNeurons"]);
